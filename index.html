@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WoS Planet Filter</title>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .search-section, .results-section {
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        
+        .filter-item {
+            margin-right: 15px;
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        
+        .multi-checkbox {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .checkbox-item {
+            margin-right: 15px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        button {
+            color: black;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .planet-name {
+            font-weight: bold;
+        }
+        
+        .planet-type {
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
+        .resource-tag {
+            padding: 2px 6px;
+            margin: 2px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            display: inline-block;
+        }
+        
+        .loading, .error {
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .error {
+            color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>WoS Planet Filter</h1>
+            <p class="subtitle">Website filter for <a href="https://gist.githubusercontent.com/ArvidSilverlock/7cea05451b3316c9f84a0b6d1a42811d/raw/233453337b4c826120d73f694c478790b9227d94/Universe.json">ArvidSilverlock's universe list</a></p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <section class="search-section">
+            <h2>Search Filters</h2>
+            
+            <div class="filter-group">
+                <h3>Basic Planet Info</h3>
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="planet-name">Planet Name Contains</label>
+                        <input type="text" id="planet-name" placeholder="e.g., Alpha, Beta">
+                    </div>
+                    <div class="filter-item">
+                        <label for="planet-type">Planet Type</label>
+                        <select id="planet-type">
+                            <option value="">Any Type</option>
+                            <option value="Barren">Barren</option>
+                            <option value="Forest">Forest</option>
+                            <option value="EarthLike">Earth-like</option>
+                            <option value="Terra">Terra</option>
+                            <option value="Ocean">Ocean</option>
+                            <option value="Tundra">Tundra</option>
+                            <option value="Exotic">Exotic</option>
+                            <option value="Gas">Gas Giant</option>
+                             <option value="RobotFactory">RobotFactory</option>
+                            <option value="RobotDepot">RobotDepot</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="has-atmosphere">Atmosphere</label>
+                        <select id="has-atmosphere">
+                            <option value="">Any</option>
+                            <option value="true">Breathable</option>
+                            <option value="false">Not Breathable</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <h3>Environmental Conditions</h3>
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="min-temp">Min Temperature</label>
+                        <input type="number" id="min-temp" placeholder="-273">
+                    </div>
+                    <div class="filter-item">
+                        <label for="max-temp">Max Temperature</label>
+                        <input type="number" id="max-temp" placeholder="1000">
+                    </div>
+                    <div class="filter-item">
+                        <label for="min-gravity">Min Gravity</label>
+                        <input type="number" id="min-gravity" placeholder="0">
+                    </div>
+                    <div class="filter-item">
+                        <label for="max-gravity">Max Gravity</label>
+                        <input type="number" id="max-gravity" placeholder="1000">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <h3>Resources</h3>
+                <label>Must Have Resources (select one or more)</label>
+                <div class="multi-checkbox" id="resource-checkboxes">
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <h3>Location</h3>
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="ref-x">Reference X Coordinate</label>
+                        <input type="number" id="ref-x" placeholder="X">
+                    </div>
+                    <div class="filter-item">
+                        <label for="ref-z">Reference Z Coordinate</label>
+                        <input type="number" id="ref-z" placeholder="Z">
+                    </div>
+                    <div class="filter-item">
+                        <label for="max-distance">Max Distance from Reference</label>
+                        <input type="number" id="max-distance" placeholder="Distance in units">
+                    </div>
+                </div>
+            </div>
+            
+            <button id="search-button">Search Planets</button>
+        </section>
+        
+        <section class="results-section">
+            <div class="results-header">
+                <h2>Search Results</h2>
+                <div class="results-count" id="results-count">0 planets found</div>
+            </div>
+            
+            <div id="loading" class="loading" style="display: none;">Loading universe data...</div>
+            <div id="error" class="error" style="display: none;"></div>
+            
+            <div id="results-container">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Coordinates</th>
+                            <th>Temperature</th>
+                            <th>Gravity</th>
+                            <th>Atmosphere</th>
+                            <th>Resources</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        let universeData = {};
+        const allResources = new Set();
+        
+        const searchButton = document.getElementById('search-button');
+        const resultsBody = document.getElementById('results-body');
+        const resultsCount = document.getElementById('results-count');
+        const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error');
+        const resourceCheckboxes = document.getElementById('resource-checkboxes');
+        
+        async function loadUniverseData() {
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            
+            try {
+                const response = await fetch('Universe.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                universeData = await response.json();
+                
+                Object.values(universeData).forEach(planet => {
+                    if (planet.Type === 'Planet' && planet.Resources) {
+                        Object.keys(planet.Resources).forEach(resource => {
+                            allResources.add(resource);
+                        });
+                    }
+                });
+                
+                const sortedResources = Array.from(allResources).sort();
+                resourceCheckboxes.innerHTML = '';
+                sortedResources.forEach(resource => {
+                    const container = document.createElement('div');
+                    container.className = 'checkbox-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `resource-${resource}`;
+                    checkbox.value = resource;
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `resource-${resource}`;
+                    label.textContent = resource;
+                    
+                    container.appendChild(checkbox);
+                    container.appendChild(label);
+                    resourceCheckboxes.appendChild(container);
+                });
+                
+                loadingElement.style.display = 'none';
+            } catch (error) {
+                console.error('Error loading universe data:', error);
+                loadingElement.style.display = 'none';
+                errorElement.textContent = `Failed to load universe data: ${error.message}`;
+                errorElement.style.display = 'block';
+            }
+        }
+        
+        function calculateDistance(x1, z1, x2, z2) {
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(z2 - z1, 2));
+        }
+        
+        function parseCoordinates(coordStr) {
+            const [x, z] = coordStr.split(', ').map(Number);
+            return { x, z };
+        }
+        
+        function filterPlanets() {
+            const nameFilter = document.getElementById('planet-name').value.toLowerCase();
+            const typeFilter = document.getElementById('planet-type').value;
+            const atmosphereFilter = document.getElementById('has-atmosphere').value;
+            const minTemp = document.getElementById('min-temp').value;
+            const maxTemp = document.getElementById('max-temp').value;
+            const minGravity = document.getElementById('min-gravity').value;
+            const maxGravity = document.getElementById('max-gravity').value;
+            const refX = document.getElementById('ref-x').value;
+            const refZ = document.getElementById('ref-z').value;
+            const maxDistance = document.getElementById('max-distance').value;
+            
+            const selectedResources = [];
+            document.querySelectorAll('#resource-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedResources.push(checkbox.value);
+            });
+            
+            const filteredPlanets = [];
+            
+            Object.entries(universeData).forEach(([coords, planet]) => {
+                if (planet.Type !== 'Planet') return;
+                
+                if (nameFilter && !planet.Name.toLowerCase().includes(nameFilter)) return;
+                if (typeFilter && planet.SubType !== typeFilter) return;
+                if (atmosphereFilter && String(planet.Atmosphere) !== atmosphereFilter) return;
+                
+                if (minTemp && planet.Temperature < parseFloat(minTemp)) return;
+                if (maxTemp && planet.Temperature > parseFloat(maxTemp)) return;
+                
+                if (minGravity && planet.Gravity < parseFloat(minGravity)) return;
+                if (maxGravity && planet.Gravity > parseFloat(maxGravity)) return;
+                
+                if (selectedResources.length > 0) {
+                    const planetResources = planet.Resources ? Object.keys(planet.Resources) : [];
+                    const hasAllResources = selectedResources.every(res => planetResources.includes(res));
+                    if (!hasAllResources) return;
+                }
+                
+                if (refX && refZ && maxDistance) {
+                    const refXNum = parseFloat(refX);
+                    const refZNum = parseFloat(refZ);
+                    const maxDistNum = parseFloat(maxDistance);
+                    
+                    const { x, z } = parseCoordinates(coords);
+                    const distance = calculateDistance(x, z, refXNum, refZNum);
+                    
+                    if (distance > maxDistNum) return;
+                }
+                
+                filteredPlanets.push({ coords, planet });
+            });
+            
+            return filteredPlanets;
+        }
+        
+        function displayResults(filteredPlanets) {
+            resultsBody.innerHTML = '';
+            
+            if (filteredPlanets.length === 0) {
+                resultsCount.textContent = 'No planets found matching your criteria';
+                return;
+            }
+            
+            resultsCount.textContent = `${filteredPlanets.length} planet${filteredPlanets.length !== 1 ? 's' : ''} found`;
+            
+            filteredPlanets.forEach(({ coords, planet }) => {
+                const row = document.createElement('tr');
+   
+                const nameCell = document.createElement('td');
+                const nameLink = document.createElement('span');
+                nameLink.className = 'planet-name';
+                nameLink.textContent = planet.Name || 'Unnamed Planet';
+                nameCell.appendChild(nameLink);
+                row.appendChild(nameCell);
+                
+                const typeCell = document.createElement('td');
+                const typeBadge = document.createElement('span');
+                typeBadge.className = 'planet-type';
+                typeBadge.textContent = planet.SubType || 'Unknown';
+                typeCell.appendChild(typeBadge);
+                row.appendChild(typeCell);
+                
+                const coordCell = document.createElement('td');
+                coordCell.textContent = coords;
+                row.appendChild(coordCell);
+                
+                const tempCell = document.createElement('td');
+                tempCell.textContent = `${planet.Temperature}`;
+                row.appendChild(tempCell);
+                
+                const gravityCell = document.createElement('td');
+                gravityCell.textContent = planet.Gravity;
+                row.appendChild(gravityCell);
+                
+                const atmoCell = document.createElement('td');
+                atmoCell.textContent = planet.Atmosphere ? 'Yes' : 'No';
+                row.appendChild(atmoCell);
+                
+                const resourcesCell = document.createElement('td');
+                if (planet.Resources) {
+                    Object.entries(planet.Resources).forEach(([resource, amount]) => {
+                        const resourceTag = document.createElement('span');
+                        resourceTag.className = 'resource-tag';
+                        resourceTag.textContent = `${resource}: ${amount}`;
+                        resourcesCell.appendChild(resourceTag);
+                    });
+                } else {
+                    resourcesCell.textContent = 'None';
+                }
+                row.appendChild(resourcesCell);
+                
+                resultsBody.appendChild(row);
+            });
+        }
+        
+        searchButton.addEventListener('click', () => {
+            const filteredPlanets = filterPlanets();
+            displayResults(filteredPlanets);
+        });
+        
+        document.addEventListener('DOMContentLoaded', loadUniverseData);
+    </script>
+</body>
+</html>
